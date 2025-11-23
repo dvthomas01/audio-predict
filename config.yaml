@@ -1,0 +1,81 @@
+# Configuration file for audio frame prediction project
+
+# Data configuration
+data:
+  raw_audio_dir: "data/raw_audio"
+  processed_spectrograms_dir: "data/processed_spectrograms"
+  sample_rate: 22050
+  n_fft: 2048
+  hop_length: 512
+  n_mels: 128
+  spectrogram_type: "mel"  # "mel" or "stft"
+  normalize: true
+
+# Model configuration
+models:
+  # LSTM baseline
+  lstm:
+    hidden_dim: 256
+    num_layers: 2
+    dropout: 0.1
+    bidirectional: false
+  
+  # Transformer Small
+  transformer_small:
+    d_model: 128
+    num_heads: 4
+    num_layers: 2
+    d_ff: 512
+    dropout: 0.1
+  
+  # Transformer Medium
+  transformer_medium:
+    d_model: 256
+    num_heads: 8
+    num_layers: 4
+    d_ff: 1024
+    dropout: 0.1
+  
+  # Transformer Large
+  transformer_large:
+    d_model: 512
+    num_heads: 16
+    num_layers: 8
+    d_ff: 2048
+    dropout: 0.1
+
+# Training configuration
+training:
+  context_size: 10  # Number of input frames
+  prediction_horizon: 5  # Number of future frames to predict (k)
+  batch_size: 32
+  num_epochs: 50
+  learning_rate: 1e-4
+  weight_decay: 1e-5
+  train_split: 0.8
+  val_split: 0.1
+  test_split: 0.1
+  device: "cuda"  # "cuda" or "cpu"
+
+# Evaluation configuration
+evaluation:
+  metrics: ["mse", "mae", "rmse", "cosine_similarity"]
+  save_predictions: true
+  reconstruct_audio: true
+
+# Experiment configurations for benchmarking
+experiments:
+  # Vary prediction horizon (k) with fixed context
+  vary_prediction_horizon:
+    context_size: 10
+    prediction_horizons: [1, 3, 5, 10, 20]
+  
+  # Vary context size with fixed prediction horizon
+  vary_context_size:
+    prediction_horizon: 5
+    context_sizes: [5, 10, 20, 30, 50]
+  
+  # Vary dataset size
+  vary_dataset_size:
+    max_files: [10, 50, 100, 500, null]  # null = all files
+
