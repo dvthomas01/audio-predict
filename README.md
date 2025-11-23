@@ -219,6 +219,4 @@ Edit `config.yaml` to adjust:
 - Training checkpoints are saved automatically
 - Evaluation results are saved as JSON files
 
-## License
 
-This project is for educational/research purposes.
