@@ -220,3 +220,8 @@ Edit `config.yaml` to adjust:
 - Evaluation results are saved as JSON files
 
 
+
+## License
+
+This project is for educational/research purposes.
+
