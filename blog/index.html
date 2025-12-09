@@ -82,25 +82,17 @@
             border-bottom: 1px solid #eee; 
             padding-bottom: 10px; 
         }
-        
-        h2 {
-            font-size: 26px;
-            margin-top: 40px;
-            border-bottom: 1px solid #f0f0f0;
-            padding-bottom: 5px;
-        }
 
         h3 {
-            font-size: 22px;
-            margin-top: 35px;
+            font-size: 24px;
+            margin-top: 40px;
         }
         
         h4 {
-            font-size: 19px;
+            font-size: 20px;
             margin-top: 30px;
             margin-bottom: 10px;
             color: #333;
-            font-weight: 600;
         }
 
         p {
@@ -166,20 +158,7 @@
             font-weight: 600;
         }
 
-        /* References Section */
-        .references {
-            margin-top: 80px;
-            padding-top: 30px;
-            border-top: 1px solid #eee;
-            font-size: 15px;
-            color: var(--text-secondary);
-        }
-
-        .ref-item {
-            margin-bottom: 12px;
-        }
-        
-        /* Placeholder Styling */
+        /* Placeholder Box Styling */
         .placeholder-box {
             background-color: #f8f9fa;
             border: 2px dashed #dee2e6;
@@ -188,7 +167,6 @@
             text-align: center;
             border-radius: 8px;
             margin: 30px 0;
-            font-style: italic;
         }
 
         .figure-placeholder {
@@ -201,7 +179,19 @@
             justify-content: center;
             margin: 30px 0;
             border-radius: 4px;
-            font-weight: 500;
+        }
+
+        /* References Section */
+        .references {
+            margin-top: 80px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+            font-size: 15px;
+            color: var(--text-secondary);
+        }
+
+        .ref-item {
+            margin-bottom: 12px;
         }
 
     </style>
@@ -214,14 +204,14 @@
             <h1 class="title">Attention vs. Recurrence: Benchmarking Transformers and LSTMs for Music Spectral Forecasting</h1>
             <div class="meta">
                 <div class="authors">
-                    <p>Dami Thomas, Liam Sheldon, Suraj Reddy</p>
+                    <a href="your_website">Dami Thomas, Liam Sheldon, Suraj Reddy</a>
                 </div>
                 <div class="subtitle">Final project for 6.7960, MIT</div>
             </div>
         </header>
 
         <img src="./images/intrographic.png" alt="Comparison of methods in research project">
-        <div class="caption">Comparison of methods in research project.</div>
+        <div class="caption">Figure 1: Introduction of methods in research project.</div>
 
         <section id="introduction">
             <h1>Introduction</h1>
@@ -252,19 +242,33 @@
             <h1>Methods</h1>
 
             <h3>Data</h3>
-            <p>We chose to utilize the <strong>Medley-Solos-DB</strong> [9] which contains a sizeable dataset of 7 different classes of instruments. The data was pre-processed into spectral representations using <strong>128 frequency bins</strong>. The raw audio, originally sampled at a high sampling rate, is converted into Mel Spectrograms. This transformation reduces the dimensionality of the data significantly.</p>
+            <p>We chose to utilize the Medley-Solos-DB [9] which contains a sizeable dataset of 7 different classes of instruments: Clarinet, Electric Guitar, Female Singer, Flute, Piano, Tenor Saxophone, Trumpet, and Violin. This dataset was chosen due to the single-instrument solos provided, with relatively short lengths, making it an optimal choice for our architecture choices and compute resources.</p> 
+            
+            <p>The data was pre-processed into spectral representations using 128 frequency bins. The raw audio, originally sampled at a high sampling rate, is converted into Mel Spectrograms. This transformation reduces the dimensionality of the data significantly, compressing 65,000 raw time steps into 253 time frames while retaining the timbral and pitch information necessary for music generation.</p>
             
             <p>We justified selecting Mel Spectrograms over Short-Time Fourier Transforms (STFT) for two reasons. Firstly, the Mel scale is engineered to mimic human perception of audio. Secondly, to verify the perceptual quality of our model outputs, we utilized the <strong>BigVGAN</strong> vocoder to invert the generated spectrograms back into audible waveforms for qualitative listening tests.</p>
-
+            <div class="figure-container">
+                <img src="images/examplespectrogram.png" alt="Example of ">
+                <div class="caption">Figure 2: Example of Mel Spectrogram Data</div>
+            </div>
             <h3>Architectures</h3>
             <p>To rigorously compare sequential modeling capabilities, we implemented two distinct architectures: a standard Autoregressive Transformer and a Baseline LSTM.</p>
 
             <h4>1. Autoregressive Transformer</h4>
-            <p>We utilized a causal Transformer architecture with sinusoidal positional encodings. To ensure the model could capture long-range dependencies, we trained three size variants. The "Large" variant utilized 8 layers, 16 attention heads, and an embedding dimension of 512.</p>
+            <p>We utilized a causal Transformer architecture with sinusoidal positional encodings. To analyze the performance-capacity trade-off, we trained three size variants with increasing depth and width:</p>
+            <ul>
+                <li><strong>Small:</strong> 2 Layers, 4 Attention Heads, Embedding Dimension of 128.</li>
+                <li><strong>Medium:</strong> 4 Layers, 8 Attention Heads, Embedding Dimension of 256.</li>
+                <li><strong>Large:</strong> 8 Layers, 16 Attention Heads, Embedding Dimension of 512.</li>
+            </ul>
 
             <h4>2. LSTM Baseline</h4>
-            <p>We implemented a standard LSTM network. The model projects the 128-dimensional input into a hidden space (256 units), processes temporal steps via a Long Short-Term Memory cell, and projects back to the spectral dimension.</p>
-            
+            <p>We implemented a standard LSTM network that projects the 128-dimensional input into a hidden space, processes temporal steps via Long Short-Term Memory cells, and projects back to the spectral dimension. To ensure a fair comparison with the Transformer, we scaled the LSTM's capacity across three variants:</p>
+            <ul>
+                <li><strong>Small:</strong> 1 Layer, Hidden Dimension of 256.</li>
+                <li><strong>Medium:</strong> 2 Layers, Hidden Dimension of 512.</li>
+                <li><strong>Large:</strong> 4 Layers, Hidden Dimension of 1024.</li>
+            </ul>
             <table>
                 <thead>
                     <tr>
@@ -276,161 +280,197 @@
                 <tbody>
                     <tr>
                         <td><strong>Small</strong></td>
-                        <td>~544k</td>
-                        <td>~600k</td>
+                        <td>544,768</td>
+                        <td>600,000</td>
                     </tr>
                     <tr>
                         <td><strong>Medium</strong></td>
-                        <td>~3.5M</td>
-                        <td>~4.3M</td>
+                        <td>4,111,232</td>
+                        <td>4,300,000</td>
                     </tr>
                     <tr>
                         <td><strong>Large</strong></td>
                         <td>26,598,016</td>
-                        <td>~33M</td>
+                        <td>33,850,496</td>
                     </tr>
                 </tbody>
             </table>
 
-            <p>Due to the differing convergence properties of the architectures, we optimized the training hyperparameters for each model type separately:</p>
+            <p>The hyperparameters and training details of the models are below:</p>
             
             <ul>
                 <li><strong>Transformer:</strong> Trained for 35 Epochs with a Batch Size of 32 and a Learning Rate of 1e-4 (AdamW).</li>
-                <li><strong>LSTM:</strong> Trained for 20 Epochs with a Batch Size of 64 and a Learning Rate of 1e-3 (Adam).</li>
+                <li><strong>LSTM:</strong> Trained for 35 Epochs with a Batch Size of 64 and a Learning Rate of 1e-4 (AdamW).</li>
             </ul>
 
             <h3>Experimental Design</h3>
-            <p>We decided to focus on three primary experiments to evaluate the generative capabilities and the subsequent robustness of the models.</p>
+            <p>We conduct three primary experiments to evaluate the generative capabilities and robustness of the models.</p>
             
             <h4>1. Future Horizon Forecasting (Varying K)</h4>
-            <p>In this experiment, we test the models ability to sustain audinly-coherent generation over long periods. We provide a fixed context window of the first 150 frames (out of 253 total) and ask the model to predict the next <i>K</i> frames autoregressively.</p>
+            <p>In this experiment, we test the models' ability to sustain coherent generation over longer periods. We provide a fixed context window of the first 150 frames and ask the model to predict the next <i>K</i> frames autoregressively.</p>
             <ul>
                 <li><strong>Context:</strong> 150 frames</li>
                 <li><strong>Prediction Horizon (<i>K</i>):</strong> [20, 60, 100] frames</li>
             </ul>
 
             <h4>2. Context Sensitivity (Varying Input)</h4>
-            <p>Next, we evaluate how much historical information each architecture requires to make accurate predictions. We fix the prediction horizon to a constant 60 frames and vary the size of the input context provided to the model. This test is conducted using the Medium size variant of both models to provide a standard testing ground.</p>
+            <p>Here, we evaluate how much historical information each architecture requires to make accurate predictions. We fix the prediction horizon to a constant 60 frames and vary the size of the input context provided to the model.</p>
             <ul>
                 <li><strong>Context Sizes:</strong> [50, 100, 150] frames</li>
                 <li><strong>Prediction Horizon:</strong> 60 frames (constant)</li>
             </ul>
 
-            <h4>3. Scalability Analysis</h4>
-            <p>Finally, we seek to compare the performance of the Small, Medium, and Large variants (defined in the Architectures section) on a standardized task: 150 context frames predicting 60 future frames. This establishes whether the Transformer scales more effectively with increased parameter counts compared to the LSTM.</p>
-
-            <h3>Robustness Testing</h3>
-            <p>To assess generalization, we introduce perturbations to the test set data. We evaluate the models on audio that has undergone:</p>
-            <ul>
-                <li><strong>Pitch Shifting:</strong> Transposing the audio up or down by one octave.</li>
-                <li><strong>Time Stretching:</strong> Increasing or decreasing the playback speed.</li>
-            </ul>
-            <p>These tests determine if the models have learned fundamental musical structures or simply memorized specific spectral patterns in the training set.</p>
+            <h4>3. Audio Analysis</h4>
+            <p>Music and Audio are an inherintly human-evaluated data format. For fair comparison and in the interest of providing readers with insight into more than visual graphs, we decided to select and cross-compare audio files that were predicted by the Transformer and LSTM to showcase. </p>
 
             <h3>Evaluation Metrics</h3>
             <p>Since the output is a continuous spectral representation, we treat the generation as a regression problem.</p>
             <ul>
-                <li><strong>Mean Squared Error (MSE):</strong> We calculate the pixel-wise MSE between the generated Mel Spectrogram and the ground truth spectrogram of the original audio. This provides a direct quantitative measure of reconstruction accuracy.</li>
+                <li><strong>Mean Squared Error (MSE):</strong> We calculate the pixel-wise MSE between the generated Mel Spectrogram and the ground truth spectrogram.</li>
+                <li><strong>Frame Accuracy:</strong> We calculate the percentage of frames within a 10% accuracy of the ground truth for the next K-frames with the current context given.</li>
                 <li><strong>Visual Inspection:</strong> We visually compare the generated spectrogram heatmaps against the ground truth to assess the definition of harmonics and the clarity of transients.</li>
+                <li><strong>Audio Inspection:</strong> We audibly compare the ground-truth testing data to the predicted model-generated audio, allowing for qualitative understanding of the generation.</li>
             </ul>
         </section>
 
-        <section id="results">
-            <h1>Results</h1>
+    <section id="results">
+        <h1>Results</h1>
 
-            <h2>LSTM Baseline</h2>
-            <div class="placeholder-box">
-                [INSERT LSTM RESULTS TEXT AND FIGURES HERE]
-            </div>
+        <p>
+            The results below break down performance across our three primary experimental dimensions: 
+            forecast horizon, context sensitivity, and audio analysis with references to MSE, Number of Frames within 10% accuracy of the ground truth, and visual inspection of Mel Spectrograms.
+        </p>
 
-            <h2>Autoregressive Transformer</h2>
+        <h3>1. Future Horizon Forecasting (Varying K)</h3>
+        <p>
+            In this experiment, we tested the stability of the models as they were asked to predict further into the future 
+            (K = 20, 60, 100 frames).
+        </p>
+
+        <h4>LSTM</h4>
+        <p>
+            The LSTM model demonstrated distinct behavior depending on the model size when faced with the varying horizons. While the Small and Medium models had a steep degredation at longer horizons (MSE > 4.0 at K=60), the Large model was surprisingly much more robust, achieving the lowest MSE of 3.23 at K=60 and 3.58 at K=100. The MSE vs K plot suggests that for LSTMs, increased parameter count directly translates to better long-term stability, agreeing with standard scaling laws. Furthermore, looking towards the Frame Accuracy vs K plot, we see how with shorter horizons, the Small and Medium models perform substantially better while the Large model is consistently the best for long horizon prediction.
+        </p>
+        <div class="figure-container">
+            <img src="images/LSTMs/benchmark1_lstm.png" alt="LSTM Performance vs Forecast Horizon">
+            <div class="caption">Figure 3: LSTM performance with Varying K-frame horizon. Note the Large model (Green) maintains the lowest error at K=60 and K=100.</div>
+        </div>
+
+        <h4>Autoregressive Transformer</h4>
+        <p>
+            On the other hand, the Transformer showed a different scaling trend, quite to our surprise. This surprise arises from the performance of the Medium model, which consistently outperformed the Large variant, suggesting that the Large Transformer possibly suffered from overfitting given the dataset size. While the Transformer's MSE errors were generally comparable to the LSTM, its inference capabilities with the Frame accuracy (within 10% of the ground truth) remained higher in the short term. Additionally, it is surprising to see how similar the performance of the Small Transformer and Large Transformer are, leading to interesting questions about scaling laws. 
+        </p>
+        <div class="figure-container">
+            <img src="images/Transformers/benchmark1_varying_k (1).png" alt="Transformer Performance vs Forecast Horizon">
+            <div class="caption">Figure 4: Transformer MSE and Frame Accuracy vs. K. The Medium model (Orange) demonstrates the best retention of accuracy.</div>
+        </div>
+
+        <hr>
+
+        <h3>2. Context Sensitivity (Varying Input)</h3>
+        <p>
+            We analyzed how the length of the input history (50, 100, or 150 frames) impacted the ability to predict the next 60 frames through Mel Spectrogram data and MSE/Frame Accuracy plots.
+        </p>
+
+        <h4>LSTM Baseline</h4>
+        <p>
+            Firstly, the LSTM benefited from increased context, with the gains were mainly presented in the Large model. Increasing context from 50 to 150 frames reduced the Large model's MSE from 3.77 to 3.23. However, the Frame Accuracy remained relatively low (less than 18%) across all context sizes, reinforcing the notion that LSTMs struggle with precise pixel-level reconstruction even when the overall contour is correct. Additionally, we see non-linear behavior when increasing from 50 to 100 frames of context, the LSTM across all model sizes either decreases in MSE or accuracy or stays at a relatively stable at the same as the 50 frame values. The 150 frames of context almost always provided improved results, except for the small and medium models in the Frame Accuracy evaluation. 
+        </p>
+        <div class="figure-container">
+            <img src="images/LSTMs/benchmark2_lstm.png" alt="LSTM Context Sensitivity">
+            <div class="caption">Figure 5: LSTM MSE vs. Context Size. The Large model (Green) shows a clear benefit from longer context, while smaller models fluctuate.</div>
+        </div>
+        <div class="figure-container">
+            <img src="images/LSTMs/spec50.png" alt="Transformer MSE vs Context Size">
+            <div class="caption">Figure 6: Mel Spectrogram of Context provided, Ground Truth, and Predicted output for K=50</div>
+        </div>
+        <p>
+            The prediction is extremely blurry. The model fails to capture the onset of new notes, resulting in a "smearing" effect where distinct harmonic lines merge into a single, undefined wash of energy. The high frequencies (>80 bins) are almost entirely absent.
+        </p>
+        <div class="figure-container">
+            <img src="images/LSTMs/spec100.png" alt="Transformer MSE vs Context Size">
+            <div class="caption">Figure 7: Mel Spectrogram of Context provided, Ground Truth, and Predicted output for K=100</div>
+        </div>
+        <p>
+            We begin to see the emergence of distinct harmonic bands, but they remain faint and disconnected. The model struggles to maintain the energy of the fundamental frequency.
+        </p>
+        <div class="figure-container">
+            <img src="images/LSTMs/spec150.png" alt="Transformer MSE vs Context Size">
+            <div class="caption">Figure 8: Mel Spectrogram of Context provided, Ground Truth, and Predicted output for K=150</div>
+        </div>
+        <p>
+            The horizontal harmonic lines are more continuous, and there is a noticeable improvement in the definition of the lower frequencies (0-40 bins). However, even with highest context provided, the LSTM still showcases an unexpected amount spectral smoothing compared to the Ground Truth, struggling to reproduce the sharp, vertical lines that characterize the a musical note. This further showcases the complexity of audio data from "basic" time-series data.
+        </p>
+
+        For LSTMs, "more context" is only beneficial if the model has the parameter capacity to store it. The Large model successfully leverages the 3.5-second history (150 frames) to reduce error, while smaller models appear overwhelmed by the sequence length.
+
+        <h4>Autoregressive Transformer</h4>
+        <p>
+            The Transformer exhibited a sharper response to context compared to the LSTM. Increasing the context window to 150 frames significantly improved both MSE and Frame Accuracy (reaching ~20%). Similarly to the LSTM, we observe the same stagnation or decrease with the 100 frames of context, begging the question as to the non-linearity of the relationship.
+        </p>
+        <div class="figure-container">
+            <img src="images/Transformers/benchmark2_varying_context.png" alt="Transformer MSE vs Context Size">
+            <div class="caption">Figure 9: Transformer Context Sensitivity. Increasing context to 150 frames yields a clear improvement in fidelity.</div>
+        </div>
+        <div class="figure-container">
+            <img src="images/Transformers/benchmark2_context50_spectrogram.png" alt="Transformer MSE vs Context Size">
+            <div class="caption">Figure 10: Mel Spectrogram of Context provided, Ground Truth, and Predicted output for K=50</div>
+        </div>
+        <p>
+            The prediction suffers from "spectral smoothing." While the model captures the general energy pattern (the bottom yellow band), it still fails to produce distinct harmonic lines in the mid-frequencies. The output appears as a blurry "wash" of sound, indicating the model lacks sufficient history to infer the specific audio textures, which is expected with the lower context.
+        </p>
+        <div class="figure-container">
+            <img src="images/Transformers/benchmark2_context100_spectrogram.png" alt="Transformer MSE vs Context Size">
+            <div class="caption">Figure 11: Mel Spectrogram of Context provided, Ground Truth, and Predicted output for K=100</div>
+        </div>
+        <p>
+            Now, we are able to see the emergence of structure, but it still is not strongly represented. The horizontal harmonic bands begin to separate from the aforementioned “wash”, but the model does still struggle with the sharper features. Even though the spectrogram seems more defined, we know that the Context=100 resulted in a dip in performance,  this is likely due to the model attempting to predict more complex structures but missing slightly, resulting in higher pixel-wise penalties than the "safe" spectrogram of Context=50.
+        </p>
+        <div class="figure-container">
+            <img src="images/Transformers/benchmark2_context150_spectrogram.png" alt="Transformer MSE vs Context Size">
+            <div class="caption">Figure 12: Mel Spectrogram of Context provided, Ground Truth, and Predicted output for K=150</div>
+        </div>
+        <p>
+            This configuration produces the highest fidelity output. However, some high-frequency detail is still smoothed out compared to the Ground Truth, the overall spectral texture is sharper and more coherent than the shorter-context models, but lacks the vertical lines of texture from the ground truth and context.
+        </p>
+        <p>
+            Unlike the linear scaling of the Large LSTM, the Transformer appears to require a longer context window to fully activate its potential. With 150 frames, the self-attention mechanism can aggregate enough historical dependencies to resolve ambiguity, transforming previously low-correlation spectrograms into relatively high-correlation graphs. 
+        </p>
+
+        <hr>
+        <h3>3. Audio Analysis (Compared with Ground Truth)</h3>
+        <p>
+            We seek to compare the LSTM and Transformer's audio predictive capabilities as we display the best quantitiative LSTM output through audio and the best quantitative Transformer through audio, allowing for qualitative analysis of the overall models. 
+        </p>
+        <div style="margin: 40px 0; padding: 20px; background-color: #f9f9f9; border-radius: 8px;">
+            <h3 style="margin-top: 0; text-align: center; margin-bottom: 30px;">Transformer's Audio Demonstration</h3>
             
-            <h3>Quantitative Analysis</h3>
-            <p>To rigorously evaluate the Autoregressive Transformer’s capabilities in spectral forecasting, we conducted three distinct benchmarks focusing on forecasting horizons, context sensitivity, and model scalability. All metrics reported below were computed on the held-out test set (N=5,841) using autoregressive generation to reflect real-world inference conditions.</p>
-
-            <h4>Model Scalability and The "Capacity Sweet Spot"</h4>
-            <p>Contrary to the standard deep learning assumption that "larger is better," our experiments revealed a non-linear relationship between parameter count and model performance. We evaluated Small (~544k), Medium (~4.1M), and Large (~26.6M) variants on a standardized task (Context=150, Horizon K=60).</p>
-
-            <table>
-                <thead>
-                    <tr>
-                        <th>Model Variant</th>
-                        <th>Parameters</th>
-                        <th>MSE ↓</th>
-                        <th>Frame Acc (10%) ↑</th>
-                        <th>R² ↑</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>Small</strong></td>
-                        <td>~0.5M</td>
-                        <td>2.55</td>
-                        <td>26.53%</td>
-                        <td>0.47</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Medium</strong></td>
-                        <td>~4.1M</td>
-                        <td><strong>2.32</strong></td>
-                        <td><strong>28.25%</strong></td>
-                        <td><strong>0.52</strong></td>
-                    </tr>
-                    <tr>
-                        <td><strong>Large</strong></td>
-                        <td>~26.6M</td>
-                        <td>2.89</td>
-                        <td>25.73%</td>
-                        <td>0.40</td>
-                    </tr>
-                </tbody>
-            </table>
-            <div class="caption">Table 1: Performance comparison across model sizes for a fixed forecast horizon of K=60. The Medium model achieves the lowest Mean Squared Error (MSE) and highest Frame Accuracy, indicating a capacity "sweet spot."</div>
-
-            <p>The <strong>Medium model</strong> consistently outperformed both the Small and Large variants. Surprisingly, the Large model performed worse than the Small baseline across several metrics, exhibiting an 11% higher MSE (2.89 vs 2.32) and a 23% lower R² than the Medium model. This suggests that for the available dataset size (~12k training samples), the Large model suffered from overfitting or optimization difficulties inherent to its complex loss landscape.</p>
-
-            <h4>Forecast Horizon (Varying K)</h4>
-            <p>We evaluated the Medium model's ability to maintain coherence over extended timeframes by varying the prediction horizon K ∈ [20, 60, 100].</p>
-
-            <div class="figure-placeholder">
-                [INSERT FIGURE 1: Line Graph showing MSE/Correlation vs. Forecast Horizon (K)]
+            <div style="margin-bottom: 25px;">
+                <h4 style="margin-bottom: 10px; font-size: 16px; color: #555;">1. Context (Input)</h4>
+                <audio controls style="width: 100%;">
+                    <source src="audio/transformercontext.m4a" type="audio/mp4">
+                    Your browser does not support the audio element.
+                </audio>
             </div>
-            <div class="caption">Figure 1: Degradation of prediction quality as the forecast horizon (K) increases. While MSE increases due to error accumulation, Correlation remains relatively stable, indicating the model preserves structural patterns even as pixel-perfect accuracy drifts.</div>
 
-            <ul>
-                <li><strong>Short-term (K=20):</strong> The model demonstrated strong fidelity (MSE=1.41, Corr=0.85), effectively continuing the immediate spectral textures.</li>
-                <li><strong>Long-term (K=100):</strong> We observed expected performance degradation (MSE=2.83, Corr=0.71). Frame accuracy dropped from 36.4% to 24.6%.</li>
-            </ul>
-            <p>This degradation is inherent to autoregressive generation. Since the model relies on its own previous outputs to generate the next frame, minor errors at step t propagate and compound by step t+n. However, the correlation remaining above 0.7 at 100 frames (approx. 2.3 seconds) indicates the model retains structural coherence even as precision drifts.</p>
-
-            <h4>Context Sensitivity</h4>
-            <p>We analyzed the impact of historical information by varying the input context window [50, 100, 150].</p>
-
-            <div class="figure-placeholder">
-                [INSERT FIGURE 2: Bar Chart or Line Graph of MSE vs. Context Size]
+            <div style="margin-bottom: 25px;">
+                <h4 style="margin-bottom: 10px; font-size: 16px; color: #e67e22;">2. Generative Prediction</h4>
+                <audio controls style="width: 100%;">
+                    <source src="audio/transformersgenerative.m4a" type="audio/mp4">
+                    Your browser does not support the audio element.
+                </audio>
             </div>
-            <div class="caption">Figure 2: Impact of context window size on validation MSE. A context of 150 frames yields the optimal performance, though diminishing returns are observed relative to the computational cost.</div>
 
-            <ul>
-                <li><strong>Context=150</strong> yielded the best performance (MSE=2.22), confirming that longer history aids in capturing temporal dependencies.</li>
-                <li><strong>Context=50</strong> resulted in higher error (MSE=2.31) and "smoother" predictions, as the model lacked sufficient history to infer complex harmonic trajectories.</li>
-            </ul>
-            <p>The improvement from 50 to 150 frames suggests that while context is critical, there are diminishing returns; the most relevant musical information is likely contained within the immediate 3-second window.</p>
-
-            <h3>Qualitative & Visual Analysis</h3>
-            <p>Visual inspection of the generated Mel spectrograms supports the quantitative metrics and highlights specific architectural behaviors.</p>
-
-            <div class="figure-placeholder">
-                [INSERT FIGURE 3: Spectrogram Comparison Grid (Ground Truth vs. Medium Model Prediction)]
+            <div style="margin-bottom: 10px;">
+                <h4 style="margin-bottom: 10px; font-size: 16px; color: #27ae60;">3. Ground Truth</h4>
+                <audio controls style="width: 100%;">
+                    <source src="audio/transformerground.m4a" type="audio/mp4">
+                    Your browser does not support the audio element.
+                </audio>
             </div>
-            <div class="caption">Figure 3: Comparison of Ground Truth vs. Generated Spectrograms (Medium Model, K=60). (A) The model accurately reconstructs low-frequency fundamentals (0-30 bins). (B) High-frequency details (>70 bins) exhibit "spectral smoothing." (C) Diagonal harmonic lines are preserved, demonstrating temporal coherence.</div>
+        </div>
 
-            <h4>Frequency Definition</h4>
-            <p>As seen in <strong>Figure 3</strong>, the Transformer architecture excels at reconstructing low-frequency content (0–30 bins). The fundamental frequencies and bass lines are rendered with high energy and sharp definition, closely matching the Ground Truth. However, a "spectral smoothing" effect is observable in the high frequencies (>70 bins). While the Ground Truth exhibits sharp, transient details in the upper registers, the Transformer’s predictions often blur these textures. This is a common phenomenon in MSE-optimized regression models, which tend to average out uncertainty.</p>
-
-            <h4>Temporal Coherence</h4>
-            <p>The Transformer successfully maintains the rhythmic structure of the audio. Unlike non-autoregressive baselines which might produce disjointed blocks, the Transformer's diagonal harmonic lines remain continuous. However, as the prediction horizon extends to the right side of the spectrograms, a gradual loss of harmonic definition is observable, visually corroborating the error accumulation noted in Section 1.2.</p>
-        </section>
+    </section>
 
         <section id="discussion">
             <h1>Discussion</h1>
@@ -452,11 +492,11 @@
             </div>
             
             <div class="ref-item">
-                [4] <a href="https://ieeexplore.ieee.org/abstract/document/10636892?casa_token=VTx_gtQI0CMAAAAA:QJQJlnGKZaq0DNZjefaZQo5C1qRHYoJC-1Ica8o-vE3qZlHP4m2eCEY04EB3D-2njAIDGA">Comparison of LSTM and Transformer for Time Series Data Forecasting</a>, Hittawe, M., Sidahmed, H., & Elshiekh, S., 2024
+                [4] <a href="https://ieeexplore.ieee.org/abstract/document/10472466">Comparison of LSTM and Transformer for Time Series Data Forecasting</a>, Hittawe, M., Sidahmed, H., & Elshiekh, S., 2024
             </div>
             
             <div class="ref-item">
-                [5] <a href="https://arxiv.org/abs/1906.02634">Scaling Autoregressive Video Models</a>, Weissenborn, D., Täckström, O., & Uszkoreit, J., 2020
+                [5] <a href="https://arxiv.org/abs/1904.10509">Scaling Autoregressive Video Models</a>, Weissenborn, D., Täckström, O., & Uszkoreit, J., 2020
             </div>
             
             <div class="ref-item">
