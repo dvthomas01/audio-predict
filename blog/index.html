@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attention vs. Recurrence: Benchmarking Transformers and LSTMs for Music Spectral Forecasting</title>
+    <style>
+        /* Minimalist "Substack-esque" Design - WIDER LAYOUT */
+        :root {
+            --background: #ffffff;
+            --text-main: #222222;
+            --text-secondary: #737373;
+            --link: #0e7862;
+            --link-hover: #24b597;
+            --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; 
+        }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--background);
+            color: var(--text-main);
+            line-height: 1.6;
+            font-size: 18px; 
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1000px; 
+            margin: 60px auto;
+            padding: 0 40px; 
+        }
+
+        /* Header Styles */
+        header {
+            margin-bottom: 50px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 30px;
+        }
+
+        h1.title {
+            font-size: 42px; 
+            font-weight: 700;
+            margin-bottom: 15px;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+        }
+
+        .meta {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-top: 15px;
+        }
+
+        .authors a {
+            color: var(--text-main);
+            font-weight: 600;
+            text-decoration: underline;
+            text-decoration-color: #ddd;
+            text-underline-offset: 2px;
+        }
+        .authors a:hover {
+            text-decoration-color: var(--text-main);
+        }
+
+        .subtitle {
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        /* Content Styles */
+        h1, h2, h3 {
+            margin-top: 50px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            color: #111;
+        }
+
+        h1 { 
+            font-size: 30px; 
+            border-bottom: 1px solid #eee; 
+            padding-bottom: 10px; 
+        }
+
+        h3 {
+            font-size: 24px;
+            margin-top: 40px;
+        }
+        
+        h4 {
+            font-size: 20px;
+            margin-top: 30px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        p {
+            margin-bottom: 24px;
+            text-align: justify; 
+        }
+
+        a {
+            color: var(--link);
+            text-decoration: none;
+        }
+
+        a:hover {
+            color: var(--link-hover);
+            text-decoration: underline;
+        }
+
+        ul, ol {
+            margin-bottom: 24px;
+            padding-left: 25px;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+
+        /* Image Handling */
+        img {
+            max-width: 100%; 
+            height: auto;
+            display: block;
+            margin: 40px auto;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+        }
+
+        .caption {
+            font-size: 15px;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-top: -25px;
+            margin-bottom: 40px;
+        }
+
+        /* Table Styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 30px 0;
+            font-size: 16px;
+            border: 1px solid #eee;
+        }
+        
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background-color: #f9f9f9;
+            font-weight: 600;
+        }
+
+        /* References Section */
+        .references {
+            margin-top: 80px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+            font-size: 15px;
+            color: var(--text-secondary);
+        }
+
+        .ref-item {
+            margin-bottom: 12px;
+        }
+        
+        /* Placeholder Styling */
+        .placeholder {
+            background-color: #f9f9f9;
+            color: #888;
+            padding: 60px;
+            text-align: center;
+            border: 1px dashed #ddd;
+            border-radius: 6px;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <header>
+            <h1 class="title">Attention vs. Recurrence: Benchmarking Transformers and LSTMs for Music Spectral Forecasting</h1>
+            <div class="meta">
+                <div class="authors">
+                    <p>Dami Thomas, Liam Sheldon, Suraj Reddy</p>
+                </div>
+                <div class="subtitle">Final project for 6.7960, MIT</div>
+            </div>
+        </header>
+
+        <img src="./images/intrographic.png" alt="Comparison of methods in research project">
+        <div class="caption">Comparison of methods in research project.</div>
+
+        <section id="introduction">
+            <h1>Introduction</h1>
+            <p>With the advent of multi-model models arriving at scale, a unique application: generative music has taken the world by storm. Whether it be music startups seeking to create indistinguishable recreations of popular artists' voices, or simply Professor Shefield experimenting with catchy songs for his 18.600 lectures, the demand for audibly coherent generation is higher than ever. In the past, the modeling of time-series data, an inherent format of music, has required capturing both immediate textural details and long-term structural dependencies. Recurrent Neural Networks (RNNs), and specifically Long Short-Term Memory (LSTM) networks, initially found great success in this arena due to their ability to retain information over time [1].</p>
+            
+            <p>However, due to the rise of Self-Attention mechanisms, Transformers have gained ground in sequence modeling tasks, raising the research question of their efficacy in audio prediction [2]. This constitutes a contentious topic in deep learning research, as opposed to Natural Language Processing (NLP); audio data’s complexity lies within its texture, as we are not only evaluating mathematically consistent predictions but audibly coherent predictions as well.</p>
+        </section>
+
+        <section id="related-works">
+            <h1>Related Works</h1>
+            <p>Even with the advent of Transformer architectures and their NLP success, their dominance of time-series forecasting data is still up for debate. Historically, LSTMs have been the standard for computer-driven music composition, with foundational work by Eck and Schmidhuber going back to 2002, where they trained LSTMs to learn blues improvisation music [3]. However, recent benchmarking studies in other applications yield differing results. For example, Hittawe et al. concluded that LSTMs can outperform Transformers in financial stock data forecasting, showcasing that even with the advent of Transformers, they still struggle with continuous numerical data [4]. On the other hand, Weissenborn et al. concluded that Transformers are significantly stronger with complex and long-range trends in autoregressive video modeling than LSTMs [5].</p>
+
+            <p>Recent work in the audio domain regarding Transformers has showcased specialized architectures. Lu et al. introduced SpecTNT, a custom Transformer architecture for music classification, as they brought forth the failures of standard Transformers in capturing spectral dependencies due to the standard vectorized representation of frequency [8]. Their work proposed a complex “Transformer in a Transformer” solution that could model the texture of complex audio data.</p>
+
+            <p>Additionally, a major gap in the current literature is the "format" of the music being predicted. Much of the successful work involving Transformers in music, such as the Music Transformer, relies on symbolic data (MIDI events) rather than raw audio [6].</p>
+        </section>
+
+        <section id="goals">
+            <h1>Goals</h1>
+            <p>Even with the advent of Transformer architectures and their NLP success, their dominance of time-series forecasting data is still up for debate. Historically, LSTMs have been the standard for computer-driven music composition, with foundational work by Eck and Schmidhuber going back to 2002, where they trained LSTMs to learn blues improvisation music [3]. However, recent benchmarking studies in other applications yield differing results. For example, Hittawe et al. concluded that LSTMs can outperform Transformers in financial stock data forecasting, showcasing that even with the advent of Transformers, they still struggle with continuous numerical data [4]. On the other hand, Weissenborn et al. concluded that Transformers are significantly stronger with complex and long-range trends in autoregressive video modeling than LSTMs [5].</p>
+
+            <p>Recent work in the audio domain regarding Transformers has showcased specialized architectures. Lu et al. introduced SpecTNT, a custom Transformer architecture for music classification, as they brought forth the failures of standard Transformers in capturing spectral dependencies due to the standard vectorized representation of frequency [8]. Their work proposed a complex “Transformer in a Transformer” solution that could model the texture of complex audio data.</p>
+
+            <p>Additionally, a major gap in the current literature is the "format" of the music being predicted. Much of the successful work involving Transformers in music, such as the Music Transformer, relies on symbolic data (MIDI events) rather than raw audio [6].</p>
+        </section>
+
+        <section id="methods">
+            <h1>Methods</h1>
+
+            <h3>Data</h3>
+            <p>We chose to utilize the <strong>Medley-Solos-DB</strong> [9] which contains a sizeable dataset of 7 different classes of instruments. The data was pre-processed into spectral representations using <strong>128 frequency bins</strong>. The raw audio, originally sampled at a high sampling rate, is converted into Mel Spectrograms. This transformation reduces the dimensionality of the data significantly.</p>
+            
+            <p>We justified selecting Mel Spectrograms over Short-Time Fourier Transforms (STFT) for two reasons. Firstly, the Mel scale is engineered to mimic human perception of audio. Secondly, to verify the perceptual quality of our model outputs, we utilized the <strong>BigVGAN</strong> vocoder to invert the generated spectrograms back into audible waveforms for qualitative listening tests.</p>
+
+            <h3>Architectures</h3>
+            <p>To rigorously compare sequential modeling capabilities, we implemented two distinct architectures: a standard Autoregressive Transformer and a Baseline LSTM.</p>
+
+            <h4>1. Autoregressive Transformer</h4>
+            <p>We utilized a causal Transformer architecture with sinusoidal positional encodings. To ensure the model could capture long-range dependencies, we trained three size variants. The "Large" variant utilized 8 layers, 16 attention heads, and an embedding dimension of 512.</p>
+
+            <h4>2. LSTM Baseline</h4>
+            <p>We implemented a standard LSTM network. The model projects the 128-dimensional input into a hidden space (256 units), processes temporal steps via a Long Short-Term Memory cell, and projects back to the spectral dimension.</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Model Variant</th>
+                        <th>Transformer Parameters</th>
+                        <th>LSTM Parameters</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Small</strong></td>
+                        <td>~544k</td>
+                        <td>~600k</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Medium</strong></td>
+                        <td>~3.5M</td>
+                        <td>~4.3M</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Large</strong></td>
+                        <td>26,598,016</td>
+                        <td>~33M</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p>Due to the differing convergence properties of the architectures, we optimized the training hyperparameters for each model type separately:</p>
+            
+            <ul>
+                <li><strong>Transformer:</strong> Trained for 35 Epochs with a Batch Size of 32 and a Learning Rate of 1e-4 (AdamW).</li>
+                <li><strong>LSTM:</strong> Trained for 20 Epochs with a Batch Size of 64 and a Learning Rate of 1e-3 (Adam).</li>
+            </ul>
+
+            <h3>Experimental Design</h3>
+            <p>We decided to focus on three primary experiments to evaluate the generative capabilities and the subsequent robustness of the models.</p>
+            
+            <h4>1. Future Horizon Forecasting (Varying K)</h4>
+            <p>In this experiment, we test the models ability to sustain audinly-coherent generation over long periods. We provide a fixed context window of the first 150 frames (out of 253 total) and ask the model to predict the next <i>K</i> frames autoregressively.</p>
+            <ul>
+                <li><strong>Context:</strong> 150 frames</li>
+                <li><strong>Prediction Horizon (<i>K</i>):</strong> [20, 60, 100] frames</li>
+            </ul>
+
+            <h4>2. Context Sensitivity (Varying Input)</h4>
+            <p>Next, we evaluate how much historical information each architecture requires to make accurate predictions. We fix the prediction horizon to a constant 60 frames and vary the size of the input context provided to the model. This test is conducted using the Medium size variant of both models to provide a standard testing ground.</p>
+            <ul>
+                <li><strong>Context Sizes:</strong> [50, 100, 150] frames</li>
+                <li><strong>Prediction Horizon:</strong> 60 frames (constant)</li>
+            </ul>
+
+            <h4>3. Scalability Analysis</h4>
+            <p>Finally, we seek to compare the performance of the Small, Medium, and Large variants (defined in the Architectures section) on a standardized task: 150 context frames predicting 60 future frames. This establishes whether the Transformer scales more effectively with increased parameter counts compared to the LSTM.</p>
+
+            <h3>Robustness Testing</h3>
+            <p>To assess generalization, we introduce perturbations to the test set data. We evaluate the models on audio that has undergone:</p>
+            <ul>
+                <li><strong>Pitch Shifting:</strong> Transposing the audio up or down by one octave.</li>
+                <li><strong>Time Stretching:</strong> Increasing or decreasing the playback speed.</li>
+            </ul>
+            <p>These tests determine if the models have learned fundamental musical structures or simply memorized specific spectral patterns in the training set.</p>
+
+            <h3>Evaluation Metrics</h3>
+            <p>Since the output is a continuous spectral representation, we treat the generation as a regression problem.</p>
+            <ul>
+                <li><strong>Mean Squared Error (MSE):</strong> We calculate the pixel-wise MSE between the generated Mel Spectrogram and the ground truth spectrogram of the original audio. This provides a direct quantitative measure of reconstruction accuracy.</li>
+                <li><strong>Visual Inspection:</strong> We visually compare the generated spectrogram heatmaps against the ground truth to assess the definition of harmonics and the clarity of transients.</li>
+            </ul>
+        </section>
+
+        <section id="results">
+            <h1>Results</h1>
+            <div class="placeholder">
+                [Results section to be added here]
+            </div>
+        </section>
+
+        <section id="discussion">
+            <h1>Discussion</h1>
+            <div class="placeholder">
+                [Discussion section to be added here]
+            </div>
+        </section>
+
+        <section class="references">
+            <h3 style="margin-top:0;">References</h3>
+            
+            <div class="ref-item">
+                [1] <a href="https://www.bioinf.jku.at/publications/older/2604.pdf">Long Short-Term Memory</a>, Hochreiter, S., & Schmidhuber, J., 1997
+            </div>
+            
+            <div class="ref-item">
+                [2] <a href="https://arxiv.org/abs/1706.03762">Attention Is All You Need</a>, Vaswani, A., et al., 2017
+            </div>
+            
+            <div class="ref-item">
+                [3] <a href="https://people.idsia.ch/~juergen/blues/IDSIA-07-02.pdf">A First Look at Music Composition Using LSTM Recurrent Neural Networks</a>, Eck, D., & Schmidhuber, J., 2002
+            </div>
+            
+            <div class="ref-item">
+                [4] <a href="https://ieeexplore.ieee.org/abstract/document/10636892?casa_token=VTx_gtQI0CMAAAAA:QJQJlnGKZaq0DNZjefaZQo5C1qRHYoJC-1Ica8o-vE3qZlHP4m2eCEY04EB3D-2njAIDGA">Comparison of LSTM and Transformer for Time Series Data Forecasting</a>, Hittawe, M., Sidahmed, H., & Elshiekh, S., 2024
+            </div>
+            
+            <div class="ref-item">
+                [5] <a href="https://arxiv.org/abs/1906.02634">Scaling Autoregressive Video Models</a>, Weissenborn, D., Täckström, O., & Uszkoreit, J., 2020
+            </div>
+            
+            <div class="ref-item">
+                [6] <a href="https://arxiv.org/abs/1809.04281">Music Transformer</a>, Huang, C. Z. A., et al., 2018
+            </div>
+            
+            <div class="ref-item">
+                [7] <a href="https://arxiv.org/abs/1906.01083">MelNet: A Generative Model for Audio in the Frequency Domain</a>, Vasquez, S., & Lewis, M., 2019
+            </div>
+            
+            <div class="ref-item">
+                [8] <a href="https://arxiv.org/abs/2110.09127">SpecTNT: A Time-Frequency Transformer for Music Audio</a>, Lu, W. T., et al., 2021
+            </div>
+
+            <div class="ref-item">
+                [9] <a href="https://doi.org/10.5281/zenodo.2582103">Medley-solos-DB: a cross-collection dataset for musical instrument recognition</a>, Lostanlen, V., Cella, C.-E., Bittner, R., & Essid, S., 2019
+            </div>
+
+        </section>
+
+    </div>
+
+</body>
+</html>
