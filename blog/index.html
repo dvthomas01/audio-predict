@@ -434,22 +434,6 @@
 
         <section id="discussion">
             <h1>Discussion</h1>
-
-            <h2>LSTM Baseline</h2>
-            <div class="placeholder-box">
-                [INSERT LSTM DISCUSSION TEXT HERE]
-            </div>
-
-            <h2>Autoregressive Transformer</h2>
-
-            <h3>The "Metric Paradox": Shape vs. Precision</h3>
-            <p>A notable finding is the discrepancy between our high Correlation scores (~0.76–0.85) and low strict Frame Accuracy (~26–36%). Frame Accuracy requires a prediction to be within a strict 10% margin of the ground truth pixel value. This discrepancy indicates that the Transformer has successfully learned the <strong>"shape"</strong> of the music (the rise and fall of pitch, the rhythm, and structure) but struggles with <strong>exact magnitude precision</strong>. In audio synthesis, capturing the correct "shape" (high correlation) is often more perceptually important than minimizing pixel-wise distance, as slightly quieter or louder harmonics often sound naturally plausible even if they fail a strict 10% accuracy threshold.</p>
-
-            <h3>The Failure of the Large Model</h3>
-            <p>The underperformance of the Large model highlights a critical constraint in audio modeling: <strong>Data-to-Parameter Ratio</strong>. With only ~12,236 training samples, the Large model operates at approximately 460 samples per million parameters. This is orders of magnitude lower than typical transformer training ratios. The Large model likely memorized training noise rather than learning generalizable features, whereas the Medium model (4.1M params) possessed sufficient capacity to learn complex spectral patterns without saturating the limited dataset.</p>
-
-            <h3>Autoregressive Drift</h3>
-            <p>The results confirm that while the Transformer is a powerful sequence modeler, it is susceptible to drift over long horizons. Without ground-truth correction (teacher forcing) during inference, the model eventually converges toward a mean-state or generic spectral texture. Future work could address this via <strong>Scheduled Sampling</strong> during training, gradually weaning the model off teacher forcing to make it more robust to its own generation errors.</p>
         </section>
 
         <section class="references">
