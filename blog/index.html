@@ -82,17 +82,25 @@
             border-bottom: 1px solid #eee; 
             padding-bottom: 10px; 
         }
+        
+        h2 {
+            font-size: 26px;
+            margin-top: 40px;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 5px;
+        }
 
         h3 {
-            font-size: 24px;
-            margin-top: 40px;
+            font-size: 22px;
+            margin-top: 35px;
         }
         
         h4 {
-            font-size: 20px;
+            font-size: 19px;
             margin-top: 30px;
             margin-bottom: 10px;
             color: #333;
+            font-weight: 600;
         }
 
         p {
@@ -133,8 +141,9 @@
             font-size: 15px;
             color: var(--text-secondary);
             text-align: center;
-            margin-top: -25px;
+            margin-top: -15px;
             margin-bottom: 40px;
+            font-style: italic;
         }
 
         /* Table Styling */
@@ -171,15 +180,28 @@
         }
         
         /* Placeholder Styling */
-        .placeholder {
-            background-color: #f9f9f9;
-            color: #888;
-            padding: 60px;
+        .placeholder-box {
+            background-color: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            color: #6c757d;
+            padding: 40px;
             text-align: center;
-            border: 1px dashed #ddd;
-            border-radius: 6px;
-            margin-bottom: 30px;
+            border-radius: 8px;
+            margin: 30px 0;
             font-style: italic;
+        }
+
+        .figure-placeholder {
+            background-color: #eef2f5;
+            border: 1px solid #dee2e6;
+            color: #6c757d;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 30px 0;
+            border-radius: 4px;
+            font-weight: 500;
         }
 
     </style>
@@ -315,16 +337,119 @@
 
         <section id="results">
             <h1>Results</h1>
-            <div class="placeholder">
-                [Results section to be added here]
+
+            <h2>LSTM Baseline</h2>
+            <div class="placeholder-box">
+                [INSERT LSTM RESULTS TEXT AND FIGURES HERE]
             </div>
+
+            <h2>Autoregressive Transformer</h2>
+            
+            <h3>Quantitative Analysis</h3>
+            <p>To rigorously evaluate the Autoregressive Transformer’s capabilities in spectral forecasting, we conducted three distinct benchmarks focusing on forecasting horizons, context sensitivity, and model scalability. All metrics reported below were computed on the held-out test set (N=5,841) using autoregressive generation to reflect real-world inference conditions.</p>
+
+            <h4>Model Scalability and The "Capacity Sweet Spot"</h4>
+            <p>Contrary to the standard deep learning assumption that "larger is better," our experiments revealed a non-linear relationship between parameter count and model performance. We evaluated Small (~544k), Medium (~4.1M), and Large (~26.6M) variants on a standardized task (Context=150, Horizon K=60).</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Model Variant</th>
+                        <th>Parameters</th>
+                        <th>MSE ↓</th>
+                        <th>Frame Acc (10%) ↑</th>
+                        <th>R² ↑</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Small</strong></td>
+                        <td>~0.5M</td>
+                        <td>2.55</td>
+                        <td>26.53%</td>
+                        <td>0.47</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Medium</strong></td>
+                        <td>~4.1M</td>
+                        <td><strong>2.32</strong></td>
+                        <td><strong>28.25%</strong></td>
+                        <td><strong>0.52</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Large</strong></td>
+                        <td>~26.6M</td>
+                        <td>2.89</td>
+                        <td>25.73%</td>
+                        <td>0.40</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="caption">Table 1: Performance comparison across model sizes for a fixed forecast horizon of K=60. The Medium model achieves the lowest Mean Squared Error (MSE) and highest Frame Accuracy, indicating a capacity "sweet spot."</div>
+
+            <p>The <strong>Medium model</strong> consistently outperformed both the Small and Large variants. Surprisingly, the Large model performed worse than the Small baseline across several metrics, exhibiting an 11% higher MSE (2.89 vs 2.32) and a 23% lower R² than the Medium model. This suggests that for the available dataset size (~12k training samples), the Large model suffered from overfitting or optimization difficulties inherent to its complex loss landscape.</p>
+
+            <h4>Forecast Horizon (Varying K)</h4>
+            <p>We evaluated the Medium model's ability to maintain coherence over extended timeframes by varying the prediction horizon K ∈ [20, 60, 100].</p>
+
+            <div class="figure-placeholder">
+                [INSERT FIGURE 1: Line Graph showing MSE/Correlation vs. Forecast Horizon (K)]
+            </div>
+            <div class="caption">Figure 1: Degradation of prediction quality as the forecast horizon (K) increases. While MSE increases due to error accumulation, Correlation remains relatively stable, indicating the model preserves structural patterns even as pixel-perfect accuracy drifts.</div>
+
+            <ul>
+                <li><strong>Short-term (K=20):</strong> The model demonstrated strong fidelity (MSE=1.41, Corr=0.85), effectively continuing the immediate spectral textures.</li>
+                <li><strong>Long-term (K=100):</strong> We observed expected performance degradation (MSE=2.83, Corr=0.71). Frame accuracy dropped from 36.4% to 24.6%.</li>
+            </ul>
+            <p>This degradation is inherent to autoregressive generation. Since the model relies on its own previous outputs to generate the next frame, minor errors at step t propagate and compound by step t+n. However, the correlation remaining above 0.7 at 100 frames (approx. 2.3 seconds) indicates the model retains structural coherence even as precision drifts.</p>
+
+            <h4>Context Sensitivity</h4>
+            <p>We analyzed the impact of historical information by varying the input context window [50, 100, 150].</p>
+
+            <div class="figure-placeholder">
+                [INSERT FIGURE 2: Bar Chart or Line Graph of MSE vs. Context Size]
+            </div>
+            <div class="caption">Figure 2: Impact of context window size on validation MSE. A context of 150 frames yields the optimal performance, though diminishing returns are observed relative to the computational cost.</div>
+
+            <ul>
+                <li><strong>Context=150</strong> yielded the best performance (MSE=2.22), confirming that longer history aids in capturing temporal dependencies.</li>
+                <li><strong>Context=50</strong> resulted in higher error (MSE=2.31) and "smoother" predictions, as the model lacked sufficient history to infer complex harmonic trajectories.</li>
+            </ul>
+            <p>The improvement from 50 to 150 frames suggests that while context is critical, there are diminishing returns; the most relevant musical information is likely contained within the immediate 3-second window.</p>
+
+            <h3>Qualitative & Visual Analysis</h3>
+            <p>Visual inspection of the generated Mel spectrograms supports the quantitative metrics and highlights specific architectural behaviors.</p>
+
+            <div class="figure-placeholder">
+                [INSERT FIGURE 3: Spectrogram Comparison Grid (Ground Truth vs. Medium Model Prediction)]
+            </div>
+            <div class="caption">Figure 3: Comparison of Ground Truth vs. Generated Spectrograms (Medium Model, K=60). (A) The model accurately reconstructs low-frequency fundamentals (0-30 bins). (B) High-frequency details (>70 bins) exhibit "spectral smoothing." (C) Diagonal harmonic lines are preserved, demonstrating temporal coherence.</div>
+
+            <h4>Frequency Definition</h4>
+            <p>As seen in <strong>Figure 3</strong>, the Transformer architecture excels at reconstructing low-frequency content (0–30 bins). The fundamental frequencies and bass lines are rendered with high energy and sharp definition, closely matching the Ground Truth. However, a "spectral smoothing" effect is observable in the high frequencies (>70 bins). While the Ground Truth exhibits sharp, transient details in the upper registers, the Transformer’s predictions often blur these textures. This is a common phenomenon in MSE-optimized regression models, which tend to average out uncertainty.</p>
+
+            <h4>Temporal Coherence</h4>
+            <p>The Transformer successfully maintains the rhythmic structure of the audio. Unlike non-autoregressive baselines which might produce disjointed blocks, the Transformer's diagonal harmonic lines remain continuous. However, as the prediction horizon extends to the right side of the spectrograms, a gradual loss of harmonic definition is observable, visually corroborating the error accumulation noted in Section 1.2.</p>
         </section>
 
         <section id="discussion">
             <h1>Discussion</h1>
-            <div class="placeholder">
-                [Discussion section to be added here]
+
+            <h2>LSTM Baseline</h2>
+            <div class="placeholder-box">
+                [INSERT LSTM DISCUSSION TEXT HERE]
             </div>
+
+            <h2>Autoregressive Transformer</h2>
+
+            <h3>The "Metric Paradox": Shape vs. Precision</h3>
+            <p>A notable finding is the discrepancy between our high Correlation scores (~0.76–0.85) and low strict Frame Accuracy (~26–36%). Frame Accuracy requires a prediction to be within a strict 10% margin of the ground truth pixel value. This discrepancy indicates that the Transformer has successfully learned the <strong>"shape"</strong> of the music (the rise and fall of pitch, the rhythm, and structure) but struggles with <strong>exact magnitude precision</strong>. In audio synthesis, capturing the correct "shape" (high correlation) is often more perceptually important than minimizing pixel-wise distance, as slightly quieter or louder harmonics often sound naturally plausible even if they fail a strict 10% accuracy threshold.</p>
+
+            <h3>The Failure of the Large Model</h3>
+            <p>The underperformance of the Large model highlights a critical constraint in audio modeling: <strong>Data-to-Parameter Ratio</strong>. With only ~12,236 training samples, the Large model operates at approximately 460 samples per million parameters. This is orders of magnitude lower than typical transformer training ratios. The Large model likely memorized training noise rather than learning generalizable features, whereas the Medium model (4.1M params) possessed sufficient capacity to learn complex spectral patterns without saturating the limited dataset.</p>
+
+            <h3>Autoregressive Drift</h3>
+            <p>The results confirm that while the Transformer is a powerful sequence modeler, it is susceptible to drift over long horizons. Without ground-truth correction (teacher forcing) during inference, the model eventually converges toward a mean-state or generic spectral texture. Future work could address this via <strong>Scheduled Sampling</strong> during training, gradually weaning the model off teacher forcing to make it more robust to its own generation errors.</p>
         </section>
 
         <section class="references">
