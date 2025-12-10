@@ -14,6 +14,7 @@
             --link-hover: #24b597;
             --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; 
         }
+        
 
         body {
             font-family: var(--font-body);
@@ -195,6 +196,16 @@
         }
 
     </style>
+    <script>
+        window.MathJax = {
+          tex: {
+            inlineMath: [["\\(", "\\)"]],
+            displayMath: [["\\[", "\\]"]]
+          }
+        };
+      </script>
+      <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+      
 </head>
 <body>
 
@@ -246,7 +257,11 @@
             
             <p>The data was pre-processed into spectral representations using 128 frequency bins. The raw audio, originally sampled at a high sampling rate, is converted into Mel Spectrograms. This transformation reduces the dimensionality of the data significantly, compressing 65,000 raw time steps into 253 time frames while retaining the timbral and pitch information necessary for music generation.</p>
             
-            <p>We justified selecting Mel Spectrograms over Short-Time Fourier Transforms (STFT) for two reasons. Firstly, the Mel scale is engineered to mimic human perception of audio. Secondly, to verify the perceptual quality of our model outputs, we utilized the <strong>BigVGAN</strong> vocoder to invert the generated spectrograms back into audible waveforms for qualitative listening tests.</p>
+            <p>We justified selecting Mel Spectrograms over Short-Time Fourier Transforms (STFT) for two reasons. Firstly, the Mel scale is engineered to mimic human perception of audio. Secondly, to verify the perceptual quality of our model outputs, we decoded the generated spectrograms back into audible waveforms using the Griffin-Lim algorithm.</p>
+            <p>
+                To reconstruct audio from the predicted Mel Spectrograms, we reverse the preprocessing pipeline used during training. The predicted matrix is first arranged so that the one hundred twenty eight Mel frequency bins appear along the first dimension, and we apply the exponential map to convert log magnitudes into linear values, since \( \exp(L) = X \) whenever \( L = \log(X) \). We then transform the linear Mel magnitudes into a linear frequency spectrogram using the inverse Mel operator, which expands the perceptual Mel scale into \( n_{\text{stft}} \) uniformly spaced bins. With \( n_{\text{fft}} = 2048 \), this produces \( n_{\text{stft}} = \frac{n_{\text{fft}}}{2} + 1 = 1025 \) linear frequency bins. Because the Mel representation contains only magnitude, we estimate the missing phase using the Griffin Lim algorithm. This algorithm iteratively refines a waveform so that its magnitude spectrogram matches the predicted one. After convergence, we remove the batch dimension and obtain a one dimensional audio signal, which allows the model outputs to be evaluated through listening.
+            </p>
+            
             <div class="figure-container">
                 <img src="images/examplespectrogram.png" alt="Example of ">
                 <div class="caption">Figure 2: Example of Mel Spectrogram Data</div>
@@ -479,9 +494,66 @@
 
     </section>
 
-        <section id="discussion">
-            <h1>Discussion</h1>
-        </section>
+    <section id="discussion">
+        <h1>Discussion</h1>
+    
+        <p>
+            Our initial expectations centered around the assumption that Transformers would require a much larger dataset to reach strong performance. We believed that the global relationship bias of Transformers would not be fully activated with only twelve thousand samples. We also expected that the heavy compression produced by the Mel Spectrogram representation would reduce the long range dependencies that Transformers are designed to capture. As a result, we predicted that LSTM based models would perform better across context sizes and predictive horizons. 
+        </p>
+    
+        <p>
+            The empirical results did not support these expectations. Across both context sizes and future frame horizons, the Transformer produced lower error values, higher frame accuracy values, and higher quality results during qualitative evaluation. These findings indicate that the dataset was large enough for the Transformer to learn meaningful global patterns in the music. The results also suggest that model size does not strictly correlate with better performance. The LSTM followed a more traditional scaling behavior, since the large model consistently outperformed the smaller ones. In contrast, the Transformer achieved its strongest results in the medium sized model. The large model did not generalize as well, most likely due to limited data, poor optimization, or insufficiently stable training. This pattern was surprising and highlighted the sensitivity of Transformers to model capacity and dataset size.
+        </p>
+    
+        <h3>Benchmark 1 Future Horizon Analysis</h3>
+    
+        <p>
+            The Transformer showed predictable degradation as the prediction horizon increased. All models produced higher error values and lower accuracy values as K increased. However, the medium model consistently remained the strongest performer. The small and large models produced very similar results. The underperformance of the large model was likely due to overfitting. A model with more than twenty million parameters requires either a much larger dataset or a more careful optimization schedule. The large learning rate we used may have prevented the model from discovering stable and generalizable patterns. A reduced learning rate would likely improve the performance of the large Transformer by reducing instability during training. 
+        </p>
+    
+        <p>
+            The LSTM displayed a very different behavior. The large LSTM produced the lowest error values across prediction horizons, yet its frame accuracy remained consistently low. This suggests that the model generated stable predictions that were slightly outside of the ten percent accuracy threshold. The small and medium LSTM models produced more varied predictions, since their error and accuracy values fluctuated more strongly as the horizon increased. These observations match expectations for recurrent networks, since these models often struggle with stability when predicting far into the future. 
+        </p>
+    
+        <h3>Benchmark 2 Context Sensitivity</h3>
+    
+        <p>
+            The Transformer displayed a loose overall trend of improved performance when more context was provided. The medium model benefitted most clearly from the larger context window, since the one hundred fifty frame condition reduced error and increased accuracy relative to the fifty frame condition. The one hundred frame condition produced unexpectedly worse results. A possible explanation is that one hundred frames is not enough to establish the structure of the musical phrase, yet it may introduce more complexity than the shorter context window. In contrast, one hundred fifty frames provide a complete view of the evolving audio, which may allow the model to form more stable representations. 
+        </p>
+    
+        <p>
+            The LSTM displayed a more predictable relationship between context size and performance. The large model improved consistently when provided with longer context windows. The medium and small LSTM models occasionally underperformed at one hundred frames in ways that resembled the Transformer behavior, which suggests that this mid range context window contains structural ambiguities. The broader trend confirms that longer context windows generally help LSTM models, especially when the model has enough capacity to store and process extended temporal information. 
+        </p>
+    
+        <h3>Spectrogram Analysis</h3>
+    
+        <p>
+            The spectrogram comparisons revealed clear differences in qualitative behavior. The LSTM predictions displayed significant smoothing across most of the frequency bins. Harmonic lines that appear sharply in the ground truth became blurred into broad regions of energy. This suggests that the LSTM converged toward averaged predictions when uncertain. The Transformer produced more distinct harmonic structures that resembled the ground truth more closely. The Transformer also preserved more of the energy distribution across the mid range frequencies. However, both models failed to produce sharp vertical structures and detailed transients. This indicates that while Transformers capture global relationships more effectively, both architectures struggle with fine grained musical detail in autoregressive generation tasks. 
+        </p>
+    
+        <h3>Audio Comparison</h3>
+    
+        <p>
+            The audio comparison highlighted the strengths and weaknesses of each model. The Transformer generated audio samples that were more consistent with the ground truth in terms of pitch, loudness, and timbral structure. The LSTM generated audio that was noticeably noisier and louder than the context signal. The LSTM also diverged rapidly from the reference audio. The Transformer preserved subtle characteristics such as amplitude variation, frequency contouring, and general shape of the melody. These observations support the quantitative results and show that the Transformer was better at capturing global musical relationships. 
+        </p>
+    
+        <h3>Future Work and Conclusion</h3>
+    
+        <p>
+            Future work can focus on improving the training strategy and architectural design of the Transformer. The larger Transformer struggled to use its full parameter capacity, which suggests that the model would benefit from a more controlled learning rate schedule and more careful optimization. Adjustments that stabilize early training and guide the model toward smoother convergence would likely improve performance and allow the larger model to generalize more effectively.
+        </p>
+        
+        <p>
+            Another promising direction involves exploring audio specific architectures that combine attention with convolution. These designs can capture both local frequency detail and broader musical structure and may allow the model to learn sharper harmonics and more expressive timbral patterns. Improvements to the dataset would also be valuable. Data augmentation methods such as time stretching, pitch shifting, and frequency masking would increase diversity and reduce overfitting, and a wider range of instruments and musical passages would give the model richer material to learn from.
+        </p>
+        
+        <p>
+            In conclusion, the Transformer showed stronger ability to capture long range musical relationships and produced clearer and more stable audio predictions than the LSTM. The project highlights the importance of optimization choices and specialized architecture design, especially as model size increases. Although autoregressive forecasting remains challenging due to accumulating error, these findings indicate that attention based models are a strong foundation for future work in musical audio generation and sequence prediction.
+        </p>
+        
+    
+    </section>
+    
 
         <section class="references">
             <h3 style="margin-top:0;">References</h3>
