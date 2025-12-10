@@ -338,7 +338,7 @@
 
         <p>
             The results below break down performance across our three primary experimental dimensions: 
-            forecast horizon, context sensitivity, and audio analysis with references to MSE, Number of Frames within 10% accuracy of the ground truth, and visual inspection of Mel Spectrograms.
+            forecast horizon, context sensitivity, and audio comparison with references to MSE, Number of Frames within 10% accuracy of the ground truth, and visual inspection of Mel Spectrograms.
         </p>
 
         <h3>1. Future Horizon Forecasting (Varying K)</h3>
@@ -438,9 +438,9 @@
         </p>
 
         <hr>
-        <h3>3. Audio Analysis (Compared with Ground Truth)</h3>
+        <h3>3. Audio Comparison (Compared with Ground Truth)</h3>
         <p>
-            We seek to compare the LSTM and Transformer's audio predictive capabilities as we display the best quantitiative LSTM output through audio and the best quantitative Transformer through audio, allowing for qualitative analysis of the overall models. 
+            We seek to compare the LSTM Large Model and Transformer's Medium Model audio predictive capabilities as we display the generated sampled LSTM output through audio and a generated Transformer through audio on the same context and ground truth, allowing for qualitative analysis of the overall models while also comparing with the spectrogram equivalent. 
         </p>
         <div style="margin: 40px 0; padding: 20px; background-color: #f9f9f9; border-radius: 8px;">
             <h3 style="margin-top: 0; text-align: center; margin-bottom: 30px;">Transformer's Audio Demonstration</h3>
@@ -469,6 +469,13 @@
                 </audio>
             </div>
         </div>
+        <div class="figure-container">
+            <img src="images/Transformers/spectrogram_comparison.png" alt="Transformer MSE vs Context Size">
+            <div class="caption">Figure 13: Mel Spectrogram of Transformer Medium-sized Model corresponding to generated audio above.</div>
+        </div>
+        <p>
+            While the generated audio is audibly similar to an extent, we can visually inspect that many of the complex features such as vertical lines within the spectrograms fail to be shown for the Transformer model, however, the underlying horizontal line patterns appear in some capacity.
+        </p>
 
     </section>
 
