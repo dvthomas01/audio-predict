@@ -316,7 +316,7 @@
             <p>The hyperparameters and training details of the models are below:</p>
             
             <ul>
-                <li><strong>Transformer:</strong> Trained for 35 Epochs with a Batch Size of 32 and a Learning Rate of 1e-4 (AdamW).</li>
+                <li><strong>Transformer:</strong> Trained for 35 Epochs with a Batch Size of 64 and a Learning Rate of 1e-4 (AdamW).</li>
                 <li><strong>LSTM:</strong> Trained for 35 Epochs with a Batch Size of 64 and a Learning Rate of 1e-4 (AdamW).</li>
             </ul>
 
@@ -496,8 +496,13 @@
             <img src="images/Transformers/spectrogram_comparison.png" alt="Transformer MSE vs Context Size">
             <div class="caption">Figure 13: Mel Spectrogram of Transformer Medium-sized Model corresponding to generated audio above.</div>
         </div>
+        <div class="figure-container">
+            <img src="images/LSTMs/audiolstmspec.png" alt="Transformer MSE vs Context Size">
+            <div class="caption">Figure 14: Mel Spectrogram of LSTM Large-sized Model corresponding to generated audio above.</div>
+        </div>
         <p>
             While the generated audio is audibly similar to an extent, we can visually inspect that many of the complex features such as vertical lines within the spectrograms fail to be shown for the Transformer model, however, the underlying horizontal line patterns appear in some capacity.
+            In comparison, the LSTM generated audio is essentially just static, and as we inspect the spectrogram, we can see less sharper features showcased then what the ground truth would expect. However, slight vertical lines are present which were absent from the Transformers.
         </p>
 
     </section>
