@@ -242,12 +242,14 @@
 
         <section id="goals">
             <h1>Goals</h1>
-            <p>Even with the advent of Transformer architectures and their NLP success, their dominance of time-series forecasting data is still up for debate. Historically, LSTMs have been the standard for computer-driven music composition, with foundational work by Eck and Schmidhuber going back to 2002, where they trained LSTMs to learn blues improvisation music [3]. However, recent benchmarking studies in other applications yield differing results. For example, Hittawe et al. concluded that LSTMs can outperform Transformers in financial stock data forecasting, showcasing that even with the advent of Transformers, they still struggle with continuous numerical data [4]. On the other hand, Weissenborn et al. concluded that Transformers are significantly stronger with complex and long-range trends in autoregressive video modeling than LSTMs [5].</p>
+            <p>
+                We aim to build on the foundation of SpecTNT’s findings by introducing two key research-focused shifts. Firstly, we are focusing on the domain of generative forecasting (next K-frame predictions) versus discriminative analysis. Additionally, we will be utilizing an architectural ablation, such that we revisit the performance of the standard Transformer architecture rather than the complex modifications of TNT. 
 
-            <p>Recent work in the audio domain regarding Transformers has showcased specialized architectures. Lu et al. introduced SpecTNT, a custom Transformer architecture for music classification, as they brought forth the failures of standard Transformers in capturing spectral dependencies due to the standard vectorized representation of frequency [8]. Their work proposed a complex “Transformer in a Transformer” solution that could model the texture of complex audio data.</p>
+                We present our research on the comparison of standard Transformer capacity for global attention versus LSTMs in autoregressive generation without needing specialized architectural modifications. We will experiment on Mel Spectrogram data, a representation of spectral audio proven to enhance generative capabilities [7]. Through rigorous comparison detailed in our methodology section, we will be implementing and training Small, Medium, and Large parameter variations of both architectures to isolate the effects of model size versus model architecture and test these baselines. 
+                Ultimately, we seek to answer whether the computational overhead of Transformers translates to better "listening" capabilities, or if the efficient recurrence of LSTMs remains the optimal choice for continuous audio forecasting.
 
-            <p>Additionally, a major gap in the current literature is the "format" of the music being predicted. Much of the successful work involving Transformers in music, such as the Music Transformer, relies on symbolic data (MIDI events) rather than raw audio [6].</p>
-        </section>
+            </p>
+            </section>
 
         <section id="methods">
             <h1>Methods</h1>
@@ -458,7 +460,7 @@
             We seek to compare the LSTM Large Model and Transformer's Medium Model audio predictive capabilities as we display the generated sampled LSTM output through audio and a generated Transformer through audio on the same context and ground truth, allowing for qualitative analysis of the overall models while also comparing with the spectrogram equivalent. 
         </p>
         <div style="margin: 40px 0; padding: 20px; background-color: #f9f9f9; border-radius: 8px;">
-            <h3 style="margin-top: 0; text-align: center; margin-bottom: 30px;">Transformer's Audio Demonstration</h3>
+            <h3 style="margin-top: 0; text-align: center; margin-bottom: 30px;">Transformer and LSTM Audio Demonstration</h3>
             
             <div style="margin-bottom: 25px;">
                 <h4 style="margin-bottom: 10px; font-size: 16px; color: #555;">1. Context (Input)</h4>
@@ -467,17 +469,23 @@
                     Your browser does not support the audio element.
                 </audio>
             </div>
-
             <div style="margin-bottom: 25px;">
-                <h4 style="margin-bottom: 10px; font-size: 16px; color: #e67e22;">2. Generative Prediction</h4>
+                <h4 style="margin-bottom: 10px; font-size: 16px; color: #e67e22;">2. Transformer Prediction</h4>
                 <audio controls style="width: 100%;">
                     <source src="audio/transformersgenerative.m4a" type="audio/mp4">
                     Your browser does not support the audio element.
                 </audio>
             </div>
+            <div style="margin-bottom: 25px;">
+                <h4 style="margin-bottom: 10px; font-size: 16px; color: #e622d6;">3. LSTM Prediction</h4>
+                <audio controls style="width: 100%;">
+                    <source src="audio/predicted_LSTM.m4a" type="audio/mp4">
+                    Your browser does not support the audio element.
+                </audio>
+            </div>
 
             <div style="margin-bottom: 10px;">
-                <h4 style="margin-bottom: 10px; font-size: 16px; color: #27ae60;">3. Ground Truth</h4>
+                <h4 style="margin-bottom: 10px; font-size: 16px; color: #27ae60;">4. Ground Truth</h4>
                 <audio controls style="width: 100%;">
                     <source src="audio/transformerground.m4a" type="audio/mp4">
                     Your browser does not support the audio element.
@@ -505,7 +513,7 @@
             The empirical results did not support these expectations. Across both context sizes and future frame horizons, the Transformer produced lower error values, higher frame accuracy values, and higher quality results during qualitative evaluation. These findings indicate that the dataset was large enough for the Transformer to learn meaningful global patterns in the music. The results also suggest that model size does not strictly correlate with better performance. The LSTM followed a more traditional scaling behavior, since the large model consistently outperformed the smaller ones. In contrast, the Transformer achieved its strongest results in the medium sized model. The large model did not generalize as well, most likely due to limited data, poor optimization, or insufficiently stable training. This pattern was surprising and highlighted the sensitivity of Transformers to model capacity and dataset size.
         </p>
     
-        <h3>Benchmark 1 Future Horizon Analysis</h3>
+        <h3>Benchmark 1: Future Horizon Analysis</h3>
     
         <p>
             The Transformer showed predictable degradation as the prediction horizon increased. All models produced higher error values and lower accuracy values as K increased. However, the medium model consistently remained the strongest performer. The small and large models produced very similar results. The underperformance of the large model was likely due to overfitting. A model with more than twenty million parameters requires either a much larger dataset or a more careful optimization schedule. The large learning rate we used may have prevented the model from discovering stable and generalizable patterns. A reduced learning rate would likely improve the performance of the large Transformer by reducing instability during training. 
@@ -515,7 +523,7 @@
             The LSTM displayed a very different behavior. The large LSTM produced the lowest error values across prediction horizons, yet its frame accuracy remained consistently low. This suggests that the model generated stable predictions that were slightly outside of the ten percent accuracy threshold. The small and medium LSTM models produced more varied predictions, since their error and accuracy values fluctuated more strongly as the horizon increased. These observations match expectations for recurrent networks, since these models often struggle with stability when predicting far into the future. 
         </p>
     
-        <h3>Benchmark 2 Context Sensitivity</h3>
+        <h3>Benchmark 2: Context Sensitivity</h3>
     
         <p>
             The Transformer displayed a loose overall trend of improved performance when more context was provided. The medium model benefitted most clearly from the larger context window, since the one hundred fifty frame condition reduced error and increased accuracy relative to the fifty frame condition. The one hundred frame condition produced unexpectedly worse results. A possible explanation is that one hundred frames is not enough to establish the structure of the musical phrase, yet it may introduce more complexity than the shorter context window. In contrast, one hundred fifty frames provide a complete view of the evolving audio, which may allow the model to form more stable representations. 
