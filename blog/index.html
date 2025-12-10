@@ -382,31 +382,31 @@
         </div>
         <div class="figure-container">
             <img src="images/LSTMs/spec50.png" alt="Transformer MSE vs Context Size">
-            <div class="caption">Figure 6: Mel Spectrogram of Context provided, Ground Truth, and Predicted output for K=50</div>
+            <div class="caption">Figure 6: Large Model Mel Spectrogram of Context provided, Ground Truth, and Predicted output for K=50</div>
         </div>
         <p>
             The prediction is extremely blurry. The model fails to capture the onset of new notes, resulting in a "smearing" effect where distinct harmonic lines merge into a single, undefined wash of energy. The high frequencies (>80 bins) are almost entirely absent.
         </p>
         <div class="figure-container">
             <img src="images/LSTMs/spec100.png" alt="Transformer MSE vs Context Size">
-            <div class="caption">Figure 7: Mel Spectrogram of Context provided, Ground Truth, and Predicted output for K=100</div>
+            <div class="caption">Figure 7: Large Model Mel Spectrogram of Context provided, Ground Truth, and Predicted output for K=100</div>
         </div>
         <p>
             We begin to see the emergence of distinct harmonic bands, but they remain faint and disconnected. The model struggles to maintain the energy of the fundamental frequency.
         </p>
         <div class="figure-container">
             <img src="images/LSTMs/spec150.png" alt="Transformer MSE vs Context Size">
-            <div class="caption">Figure 8: Mel Spectrogram of Context provided, Ground Truth, and Predicted output for K=150</div>
+            <div class="caption">Figure 8: Large Model Mel Spectrogram of Context provided, Ground Truth, and Predicted output for K=150</div>
         </div>
         <p>
-            The horizontal harmonic lines are more continuous, and there is a noticeable improvement in the definition of the lower frequencies (0-40 bins). However, even with highest context provided, the LSTM still showcases an unexpected amount spectral smoothing compared to the Ground Truth, struggling to reproduce the sharp, vertical lines that characterize the a musical note. This further showcases the complexity of audio data from "basic" time-series data.
+            The horizontal harmonic lines are more continuous, and there is a noticeable improvement in the definition of the lower frequencies (0-40 bins). However, even with highest context provided, the LSTM still showcases an unexpected amount spectral smoothing compared to the Ground Truth, struggling to reproduce the sharp, vertical lines that characterize a musical note. This further showcases the complexity of audio data from "basic" time-series data.
         </p>
 
-        For LSTMs, "more context" is only beneficial if the model has the parameter capacity to store it. The Large model successfully leverages the 3.5-second history (150 frames) to reduce error, while smaller models appear overwhelmed by the sequence length.
+        For LSTMs, "more context" is only beneficial if the model has the parameter capacity to store it when considering relative error and frame accuracy. The Large model successfully leverages the 3.5-second history (150 frames) to reduce error, while smaller models appear overwhelmed by the sequence length although still improving relatively.
 
         <h4>Autoregressive Transformer</h4>
         <p>
-            The Transformer exhibited a sharper response to context compared to the LSTM. Increasing the context window to 150 frames significantly improved both MSE and Frame Accuracy (reaching ~20%). Similarly to the LSTM, we observe the same stagnation or decrease with the 100 frames of context, begging the question as to the non-linearity of the relationship.
+            The Transformer exhibited an interesting response to context compared to the LSTM. Increasing the context window to 150 frames caused overall loosely correlated fluctuates to both MSE and Frame Accuracy (reaching ~20% for the Medium model). In slight similarity to the LSTM, we observe the same stagnation or decrease of accuracy with the 100 frames of context, begging the question as to the non-linearity of the relationship. This may be due to the inherint structure of audio data and music composition, such that 100 frames of context creates complexity. Overall, the medium model performed the best, with the large model performing significantly worse than all the other models. 
         </p>
         <div class="figure-container">
             <img src="images/Transformers/benchmark2_varying_context.png" alt="Transformer MSE vs Context Size">
@@ -414,27 +414,27 @@
         </div>
         <div class="figure-container">
             <img src="images/Transformers/benchmark2_context50_spectrogram.png" alt="Transformer MSE vs Context Size">
-            <div class="caption">Figure 10: Mel Spectrogram of Context provided, Ground Truth, and Predicted output for K=50</div>
+            <div class="caption">Figure 10: Medium Model Mel Spectrogram of Context provided, Ground Truth, and Predicted output for K=50</div>
         </div>
         <p>
             The prediction suffers from "spectral smoothing." While the model captures the general energy pattern (the bottom yellow band), it still fails to produce distinct harmonic lines in the mid-frequencies. The output appears as a blurry "wash" of sound, indicating the model lacks sufficient history to infer the specific audio textures, which is expected with the lower context.
         </p>
         <div class="figure-container">
             <img src="images/Transformers/benchmark2_context100_spectrogram.png" alt="Transformer MSE vs Context Size">
-            <div class="caption">Figure 11: Mel Spectrogram of Context provided, Ground Truth, and Predicted output for K=100</div>
+            <div class="caption">Figure 11: Medium Model Mel Spectrogram of Context provided, Ground Truth, and Predicted output for K=100</div>
         </div>
         <p>
             Now, we are able to see the emergence of structure, but it still is not strongly represented. The horizontal harmonic bands begin to separate from the aforementioned “wash”, but the model does still struggle with the sharper features. Even though the spectrogram seems more defined, we know that the Context=100 resulted in a dip in performance,  this is likely due to the model attempting to predict more complex structures but missing slightly, resulting in higher pixel-wise penalties than the "safe" spectrogram of Context=50.
         </p>
         <div class="figure-container">
             <img src="images/Transformers/benchmark2_context150_spectrogram.png" alt="Transformer MSE vs Context Size">
-            <div class="caption">Figure 12: Mel Spectrogram of Context provided, Ground Truth, and Predicted output for K=150</div>
+            <div class="caption">Figure 12: Medium Model Mel Spectrogram of Context provided, Ground Truth, and Predicted output for K=150</div>
         </div>
         <p>
-            This configuration produces the highest fidelity output. However, some high-frequency detail is still smoothed out compared to the Ground Truth, the overall spectral texture is sharper and more coherent than the shorter-context models, but lacks the vertical lines of texture from the ground truth and context.
+            Hypothetically, this should have produced the highest fidelity output, but this is contrasted by a visually similar spectrogram to the Context=100 spectrogram. Furthermore, some high-frequency detail is still smoothed out compared to the Ground Truth, the overall spectral texture is sharper and more coherent than the shorter-context models, but lacks the vertical lines of texture from the ground truth and context.
         </p>
         <p>
-            Unlike the linear scaling of the Large LSTM, the Transformer appears to require a longer context window to fully activate its potential. With 150 frames, the self-attention mechanism can aggregate enough historical dependencies to resolve ambiguity, transforming previously low-correlation spectrograms into relatively high-correlation graphs. 
+            Unlike the linear scaling of the Large LSTM, the Transformer appears to require a longer context window to fully activate its potential in terms of our graphs and spectrogram analysis. With 150 frames, the self-attention mechanism seems aggregate enough historical dependencies to resolve issues with lower context, however, this improvement is not strongly represented visually nor is it a magnitude of improvement quantitiatively as showcased in Figures 9-12. 
         </p>
 
         <hr>
