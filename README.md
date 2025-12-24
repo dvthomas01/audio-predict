@@ -16,214 +16,130 @@ Generative music forecasting requires capturing both local texture (transients, 
 
 More recently, **self-attention** has enabled Transformers to dominate many sequence modeling problems, raising the question of whether attention-driven models outperform recurrence for audio prediction [2]. Unlike NLP, audio forecasting must preserve fine-grained texture while remaining **audibly coherent**, not merely numerically consistent.
 
-**Research question:** *Does the computational overhead of Transformers translate into better musical “listening” than efficient recurrence?*
-
 ---
 
 ## 2. Related Work
-Early work established LSTMs as a core method for algorithmic composition (e.g., blues improvisation modeling) [3]. In other continuous forecasting domains, results are mixed: LSTMs can outperform Transformers in stock forecasting [4], while Transformers capture long-range trends better in video modeling [5].  
-
-In music/audio, Transformer success often depends on **symbolic representations** (e.g., MIDI events) rather than raw audio [6]. Audio-specific Transformer variants such as **SpecTNT** address limitations of naïve frequency-vector representations via specialized time-frequency modeling [8]. A gap remains for **standard Transformers** in **generative forecasting** tasks on continuous spectral representations.
+Early work established LSTMs as a core method for algorithmic composition [3]. In other continuous forecasting domains, results are mixed [4,5]. In music/audio, Transformer success often depends on symbolic representations [6], while audio-specific architectures such as SpecTNT introduce specialized inductive biases [8]. A gap remains for **standard Transformers** in **continuous generative forecasting**.
 
 ---
 
 ## 3. Goals
-We introduce two primary shifts relative to prior audio Transformer work:
-1. Focus on **generative autoregressive forecasting** (next-*K* prediction), not classification.
-2. Perform an **architectural ablation**: compare **standard Transformer** baselines against LSTMs rather than specialized designs (e.g., TNT).
-
-We train **Small / Medium / Large** versions of both families to isolate architecture vs. capacity effects.
+We focus on **generative autoregressive forecasting** and perform an **architectural ablation** comparing standard Transformers against LSTMs. We train **Small / Medium / Large** versions of both architectures to isolate architectural effects from model capacity.
 
 ---
 
 ## 4. Methods
 
 ### 4.1 Data
-We use **Medley-Solos-DB** [9], containing single-instrument solos across 7+ instrument classes (e.g., clarinet, electric guitar, flute, piano, trumpet, violin). This setup produces relatively clean timbral structure while remaining challenging for autoregressive forecasting.
+We use **Medley-Solos-DB** [9], containing single-instrument solos across multiple instrument classes.
 
-We preprocess audio into **128-bin Mel Spectrograms**, reducing ~65k waveform samples into ~253 time frames while retaining pitch/timbre cues.
+**Figure 1. Introduction of methods in research project**  
+![Figure 1](blog/images/intrographic.png)
 
-**Figure 1. Project overview graphic**  
-![Figure 1: Introduction of methods in research project.](./images/intrographic.png)
-
-**Figure 2. Example Mel Spectrogram**  
-![Figure 2: Example of Mel Spectrogram Data](./images/examplespectrogram.png)
+**Figure 2. Example of Mel Spectrogram Data**  
+![Figure 2](blog/images/examplespectrogram.png)
 
 ---
 
-### 4.2 Audio Reconstruction (Mel → Waveform)
-To evaluate perceptual quality, we reconstruct audio from predicted Mel Spectrograms:
-
-1. Convert log magnitudes to linear via exponentiation  
-2. Map Mel magnitudes to linear-frequency spectrogram using inverse Mel operator  
-3. Estimate missing phase using **Griffin–Lim** iterations  
-4. Output 1D waveform signal for listening-based comparison  
+### 4.2 Audio Reconstruction
+Predicted Mel Spectrograms are converted back to waveform audio by reversing the preprocessing pipeline: exponentiating log magnitudes, applying the inverse Mel transform, and estimating phase using the **Griffin–Lim** algorithm.
 
 ---
 
 ### 4.3 Architectures
 
-#### 4.3.1 Autoregressive Transformer
-Causal Transformer with sinusoidal positional encodings. Variants:
+#### Autoregressive Transformer
+Causal Transformer with sinusoidal positional encoding.
 
-- **Small:** 2 layers, 4 heads, d=128  
-- **Medium:** 4 layers, 8 heads, d=256  
-- **Large:** 8 layers, 16 heads, d=512  
-
-#### 4.3.2 LSTM Baseline
-Standard LSTM stacked with projection layers:
-
-- **Small:** 1 layer, hidden=256  
-- **Medium:** 2 layers, hidden=512  
-- **Large:** 4 layers, hidden=1024  
-
-| Variant | Transformer Params | LSTM Params |
-|---|---:|---:|
-| Small | 544,768 | ~600,000 |
-| Medium | 4,111,232 | ~4,300,000 |
-| Large | 26,598,016 | ~33,850,496 |
+#### LSTM Baseline
+Stacked LSTM with linear projection back to spectral space.
 
 ---
 
-### 4.4 Training Details
-- Optimizer: **AdamW**
-- Learning rate: `1e-4`
-- Batch size: `64`
-- Epochs: `35`
-
----
-
-### 4.5 Experimental Design
-
-#### Benchmark 1: Future Horizon Forecasting (varying *K*)
-Given fixed context of 150 frames, predict next:
-- *K* ∈ {20, 60, 100}
-
-#### Benchmark 2: Context Sensitivity (varying context)
-Fix horizon to 60 frames; vary context:
-- context ∈ {50, 100, 150}
-
-#### Benchmark 3: Audio Comparison
-Qualitative audio evaluation comparing:
-- Transformer (Medium)
-- LSTM (Large)
-- Ground truth
-
----
-
-### 4.6 Evaluation Metrics
-- **Mean Squared Error (MSE)** over spectrogram pixels
-- **Frame Accuracy**: % frames within 10% of ground truth
-- **Visual inspection**: harmonic definition, transient clarity
-- **Audio inspection**: listening-based evaluation
+### 4.4 Training
+- Optimizer: AdamW  
+- Learning Rate: 1e-4  
+- Batch Size: 64  
+- Epochs: 35  
 
 ---
 
 ## 5. Results
 
-### 5.1 Benchmark 1: Forecast Horizon (varying *K*)
+### 5.1 Future Horizon Forecasting
 
-#### LSTM
-Small/Medium LSTMs degrade sharply at longer horizons, while the Large LSTM remains more stable (lowest MSE at *K*=60 and *K*=100). This suggests a more “classic” scaling trend where additional capacity improves long-horizon stability.
+**Figure 3. LSTM performance vs. K-frame horizon**  
+![Figure 3](blog/images/LSTMs/benchmark1_lstm.png)
 
-**Figure 3. LSTM performance vs. forecast horizon**  
-![Figure 3: LSTM performance with Varying K-frame horizon](./images/LSTMs/benchmark1_lstm.png)
-
-#### Transformer
-Transformer performance shows non-monotonic scaling: **Medium outperforms Large** across horizons, suggesting possible overfitting or optimization instability in the 26M+ parameter regime.
-
-**Figure 4. Transformer performance vs. forecast horizon**  
-![Figure 4: Transformer MSE and Frame Accuracy vs. K](./images/Transformers/benchmark1_varying_k%20(1).png)
+**Figure 4. Transformer MSE and Frame Accuracy vs. K**  
+![Figure 4](blog/images/Transformers/benchmark1_varying_k%20(1).png)
 
 ---
 
-### 5.2 Benchmark 2: Context Sensitivity (varying input)
+### 5.2 Context Sensitivity
 
-#### LSTM
-Large LSTM benefits from increased context (MSE decreases from context=50 to 150). However, frame accuracy remains low overall, consistent with visually smoothed predictions.
+**Figure 5. LSTM MSE vs. Context Size**  
+![Figure 5](blog/images/LSTMs/benchmark2_lstm.png)
 
-**Figure 5. LSTM context sensitivity**  
-![Figure 5: LSTM MSE vs. Context Size](./images/LSTMs/benchmark2_lstm.png)
+**Figure 6. LSTM Large — context = 50**  
+![Figure 6](blog/images/LSTMs/spec50.png)
 
-**Figure 6. LSTM (Large) spectrogram prediction, context=50**  
-![Figure 6: Large LSTM spectrogram output for context=50](./images/LSTMs/spec50.png)
+**Figure 7. LSTM Large — context = 100**  
+![Figure 7](blog/images/LSTMs/spec100.png)
 
-**Figure 7. LSTM (Large) spectrogram prediction, context=100**  
-![Figure 7: Large LSTM spectrogram output for context=100](./images/LSTMs/spec100.png)
+**Figure 8. LSTM Large — context = 150**  
+![Figure 8](blog/images/LSTMs/spec150.png)
 
-**Figure 8. LSTM (Large) spectrogram prediction, context=150**  
-![Figure 8: Large LSTM spectrogram output for context=150](./images/LSTMs/spec150.png)
+**Figure 9. Transformer Context Sensitivity**  
+![Figure 9](blog/images/Transformers/benchmark2_varying_context.png)
 
-#### Transformer
-Transformer benefits most strongly from the longest context (150), but exhibits a surprising dip at context=100, suggesting mid-range context may introduce ambiguity without providing enough structure.
+**Figure 10. Transformer Medium — context = 50**  
+![Figure 10](blog/images/Transformers/benchmark2_context50_spectrogram.png)
 
-**Figure 9. Transformer context sensitivity**  
-![Figure 9: Transformer Context Sensitivity](./images/Transformers/benchmark2_varying_context.png)
+**Figure 11. Transformer Medium — context = 100**  
+![Figure 11](blog/images/Transformers/benchmark2_context100_spectrogram.png)
 
-**Figure 10. Transformer (Medium) spectrogram prediction, context=50**  
-![Figure 10: Transformer spectrogram output for context=50](./images/Transformers/benchmark2_context50_spectrogram.png)
-
-**Figure 11. Transformer (Medium) spectrogram prediction, context=100**  
-![Figure 11: Transformer spectrogram output for context=100](./images/Transformers/benchmark2_context100_spectrogram.png)
-
-**Figure 12. Transformer (Medium) spectrogram prediction, context=150**  
-![Figure 12: Transformer spectrogram output for context=150](./images/Transformers/benchmark2_context150_spectrogram.png)
+**Figure 12. Transformer Medium — context = 150**  
+![Figure 12](blog/images/Transformers/benchmark2_context150_spectrogram.png)
 
 ---
 
-### 5.3 Benchmark 3: Audio Comparison
+### 5.3 Audio Comparison
 
-> **Audio files:** place these in `./audio/` (or update paths accordingly)
+Audio files are linked directly (GitHub Markdown does not reliably embed players):
 
-- Context: `audio/transformercontext.m4a`  
-- Transformer prediction: `audio/transformersgenerative.m4a`  
-- LSTM prediction: `audio/predicted_LSTM.m4a`  
+- Context: `audio/transformercontext.m4a`
+- Transformer prediction: `audio/transformersgenerative.m4a`
+- LSTM prediction: `audio/predicted_LSTM.m4a`
 - Ground truth: `audio/transformerground.m4a`
 
-GitHub does not render inline `<audio>` players in Markdown reliably across clients, so we provide direct links:
-
-- **Context:** [transformercontext.m4a](./audio/transformercontext.m4a)  
-- **Transformer prediction:** [transformersgenerative.m4a](./audio/transformersgenerative.m4a)  
-- **LSTM prediction:** [predicted_LSTM.m4a](./audio/predicted_LSTM.m4a)  
-- **Ground truth:** [transformerground.m4a](./audio/transformerground.m4a)
-
 **Figure 13. Transformer spectrogram corresponding to generated audio**  
-![Figure 13: Transformer audio spectrogram](./images/Transformers/spectrogram_comparison.png)
+![Figure 13](blog/images/Transformers/spectrogram_comparison.png)
 
 **Figure 14. LSTM spectrogram corresponding to generated audio**  
-![Figure 14: LSTM audio spectrogram](./images/LSTMs/audiolstmspec.png)
-
-Qualitatively, Transformer audio better preserves pitch contour and loudness variation, while the LSTM output diverges rapidly and often becomes noisy/static. Visually, both struggle with sharp vertical transients, though Transformers preserve harmonic band structure more consistently.
+![Figure 14](blog/images/LSTMs/audiolstmspec.png)
 
 ---
 
 ## 6. Discussion
-Our initial expectation was that Transformers would require substantially more data to demonstrate benefits over recurrence, especially given the compression inherent in mel-spectrogram representations. The empirical results contradict this: Transformers yield lower error and stronger perceptual fidelity, suggesting the dataset is sufficient for attention to learn meaningful global musical dependencies.
-
-A notable result is **non-monotonic Transformer scaling**, where the Medium model outperforms the Large model. This likely reflects sensitivity to optimization and overfitting at high parameter count without sufficient training stabilization (e.g., learning-rate scheduling, warmup, or regularization).
-
-Both architectures exhibit **spectral smoothing**, and neither reliably captures transient vertical structures. This suggests that while attention improves global structure, both models lack inductive biases for local time-frequency detail.
+The Transformer consistently produced lower error and higher perceptual quality than the LSTM, despite expectations that attention would require larger datasets. Model scaling was non-monotonic for Transformers, with the Medium model outperforming the Large, likely due to optimization instability.
 
 ---
 
 ## 7. Future Work
-- Stabilize large Transformer training with improved schedules (warmup, decay, lower LR)
-- Explore hybrid models: attention + convolution for local spectral detail
-- Data augmentation: pitch shift, time stretch, frequency masking
-- Larger and more diverse datasets for stronger generalization
-- Alternative audio reconstruction and perceptual metrics beyond Griffin–Lim
+Future work includes improved Transformer optimization, hybrid attention–convolution architectures, dataset expansion, and richer perceptual evaluation metrics.
 
 ---
 
 ## References
-[1] Hochreiter, S., & Schmidhuber, J. (1997). *Long Short-Term Memory.*  
-[2] Vaswani, A., et al. (2017). *Attention Is All You Need.*  
-[3] Eck, D., & Schmidhuber, J. (2002). *A First Look at Music Composition Using LSTM RNNs.*  
-[4] Hittawe, M., Sidahmed, H., & Elshiekh, S. (2024). *Comparison of LSTM and Transformer for Time Series Data Forecasting.*  
-[5] Weissenborn, D., Täckström, O., & Uszkoreit, J. (2020). *Scaling Autoregressive Video Models.*  
-[6] Huang, C. Z. A., et al. (2018). *Music Transformer.*  
-[7] Vasquez, S., & Lewis, M. (2019). *MelNet.*  
-[8] Lu, W. T., et al. (2021). *SpecTNT: A Time-Frequency Transformer for Music Audio.*  
-[9] Lostanlen, V., et al. (2019). *Medley-solos-DB.*  
+[1] Hochreiter & Schmidhuber (1997)  
+[2] Vaswani et al. (2017)  
+[3] Eck & Schmidhuber (2002)  
+[4] Hittawe et al. (2024)  
+[5] Weissenborn et al. (2020)  
+[6] Huang et al. (2018)  
+[7] Vasquez & Lewis (2019)  
+[8] Lu et al. (2021)  
+[9] Lostanlen et al. (2019)
 
 ---
